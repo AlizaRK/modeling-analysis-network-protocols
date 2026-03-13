@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_J1_psPvNEfC83f01iACoUg" name="SlidingWindowARQ_UML">
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_J3F14PvNEfC83f01iACoUg">
+    <importedPackage xmi:type="uml:Model" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#_0"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IYyEPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_zaC5cAPHEdyeNfbOYuD9pg"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IZZIPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_jG1CQAPKEdy6wIwMc4WDOQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IZZIfwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_U_GAoAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IZZIvwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_WStkoAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IZZI_wvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_XVWGUAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IZZJPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_ar8OsAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAMPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_-wEewECLEd6UTJZnztgOLw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAMfwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_tADfQAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAMvwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_yNSZIAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAM_wvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_2dtsgAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaANPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_P80EcBJwEdygQ5HMNSpiZw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaANfwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_aMhZsBJwEdygQ5HMNSpiZw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaANvwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_bmL7UBJwEdygQ5HMNSpiZw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAN_wvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_dG2c0BJwEdygQ5HMNSpiZw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAOPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_ja8REBJwEdygQ5HMNSpiZw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAOfwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_ZJjPoEIbEd6dmI2dd6jVFQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAOvwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_gHI-ABJwEdygQ5HMNSpiZw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAO_wvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_hst0sBJwEdygQ5HMNSpiZw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAPPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_R7sL8BJwEdygQ5HMNSpiZw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAPfwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_uAf6gBJwEdygQ5HMNSpiZw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAPvwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_vrbyUBJwEdygQ5HMNSpiZw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAP_wvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_WGZ44BJwEdygQ5HMNSpiZw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IaAQPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_3VS0wAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanQPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_-1fcUBJdEdy3Td9UhuLFPg"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanQfwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_A_vtYBJeEdy3Td9UhuLFPg"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanQvwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_Cf874BJeEdy3Td9UhuLFPg"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanQ_wvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_EIfnABJeEdy3Td9UhuLFPg"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanRPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_YgAioAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanRfwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_u8y4wAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanRvwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_4bV20APMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanR_wvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_5ZCOIAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanSPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_6c2bkAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanSfwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_9ZhBAAPMEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanSvwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_DIIJoAPNEdyuUt-4qHuVvQ"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanS_wvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_CHiIYA-LEdyNj8xzjk-DoA"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanTPwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_9FdqwA-MEdyLh7muGbCqMw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanTfwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_9UgzYA-MEdyLh7muGbCqMw"/>
+  </packageImport>
+  <packageImport xmi:type="uml:PackageImport" xmi:id="_3IanTvwvEfC2hM5404589A">
+    <importedPackage xmi:type="uml:Profile" href="pathmap://Papyrus_PROFILES/MARTE.profile.uml#_jg_Z8PfhEd-f4r3MXmUB9g"/>
+  </packageImport>
+  <packagedElement xmi:type="uml:StateMachine" xmi:id="_W1ZfYPvNEfC83f01iACoUg" name="Sender State Machine">
+    <region xmi:type="uml:Region" xmi:id="_X3kuEPvNEfC83f01iACoUg" name="Region1">
+      <transition xmi:type="uml:Transition" xmi:id="_CwOrcPvOEfC83f01iACoUg" guard="_AfeyYPwyEfC2hM5404589A" source="_ttDMkPvNEfC83f01iACoUg" target="_vypnIPvNEfC83f01iACoUg">
+        <ownedRule xmi:type="uml:Constraint" xmi:id="_AfeyYPwyEfC2hM5404589A">
+          <specification xmi:type="uml:OpaqueExpression" xmi:id="_AfeyYfwyEfC2hM5404589A">
+            <language>natural</language>
+            <body>next_seq_num &lt; (send_base + window_size)</body>
+          </specification>
+        </ownedRule>
+        <effect xmi:type="uml:OpaqueBehavior" xmi:id="_nVPu0PxCEfC2hM5404589A">
+          <language>Natural language</language>
+          <body>send_packet(next_seq_num); next_seq_num++;</body>
+        </effect>
+      </transition>
+      <transition xmi:type="uml:Transition" xmi:id="_PQ4voPvOEfC83f01iACoUg" source="_vypnIPvNEfC83f01iACoUg" target="_xp6qwPvNEfC83f01iACoUg"/>
+      <transition xmi:type="uml:Transition" xmi:id="_RTW9sPvOEfC83f01iACoUg" source="_xp6qwPvNEfC83f01iACoUg" target="_ttDMkPvNEfC83f01iACoUg">
+        <trigger xmi:type="uml:Trigger" xmi:id="_FGyE8PxDEfC2hM5404589A">
+          <event xmi:type="uml:SignalEvent" href="slidingWindowARQ_UML.profileapp.uml#_EyUQ0PxDEfC2hM5404589A"/>
+        </trigger>
+      </transition>
+      <transition xmi:type="uml:Transition" xmi:id="_hbCU0PwvEfC2hM5404589A" source="_xp6qwPvNEfC83f01iACoUg" target="_vypnIPvNEfC83f01iACoUg"/>
+      <transition xmi:type="uml:Transition" xmi:id="_G3CXEPxCEfC2hM5404589A" source="_s367YPvNEfC83f01iACoUg" target="_ttDMkPvNEfC83f01iACoUg"/>
+      <transition xmi:type="uml:Transition" xmi:id="_SsXw4PxDEfC2hM5404589A" source="_xp6qwPvNEfC83f01iACoUg" target="_xp6qwPvNEfC83f01iACoUg">
+        <effect xmi:type="uml:OpaqueBehavior" xmi:id="_C-ScgPxFEfC2hM5404589A">
+          <language>Natural language</language>
+          <body>send_base++;</body>
+        </effect>
+        <trigger xmi:type="uml:Trigger" xmi:id="__AqwYPxEEfC2hM5404589A">
+          <event xmi:type="uml:SignalEvent" href="slidingWindowARQ_UML.profileapp.uml#_EyUQ0PxDEfC2hM5404589A"/>
+        </trigger>
+        <trigger xmi:type="uml:Trigger" xmi:id="_lCkdUP0NEfC9gOgqp_QnMQ" event="_QQ1TwP0NEfC9gOgqp_QnMQ"/>
+      </transition>
+      <subvertex xmi:type="uml:Pseudostate" xmi:id="_s367YPvNEfC83f01iACoUg" name="Initial1"/>
+      <subvertex xmi:type="uml:State" xmi:id="_ttDMkPvNEfC83f01iACoUg" name="Idle"/>
+      <subvertex xmi:type="uml:State" xmi:id="_vypnIPvNEfC83f01iACoUg" name="Sending"/>
+      <subvertex xmi:type="uml:State" xmi:id="_xp6qwPvNEfC83f01iACoUg" name="WaitingForAck"/>
+    </region>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_PTi5EPwxEfC2hM5404589A" name="Sender">
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_RaYpwPwxEfC2hM5404589A" name="window_size">
+      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+      <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_dAS_IPxAEfC2hM5404589A" value="4"/>
+    </ownedAttribute>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_XygCYPwxEfC2hM5404589A" name="next_seq_num">
+      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+      <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_eA5ggPxAEfC2hM5404589A"/>
+    </ownedAttribute>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_YK4vYPxAEfC2hM5404589A" name="send_base">
+      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+      <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_eqAH4PxAEfC2hM5404589A"/>
+    </ownedAttribute>
+    <ownedAttribute xmi:type="uml:Port" xmi:id="_bTKwAP3iEfC9L-xk1Nnf-A" name="inPort" visibility="public" aggregation="composite"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_uluWAPxGEfC2hM5404589A" name="Receiver">
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_cHhf4PxHEfC2hM5404589A" name="receive_window">
+      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+      <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_f8saoPxHEfC2hM5404589A" value="4"/>
+    </ownedAttribute>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_WODyIPxHEfC2hM5404589A" name="expected_seq_num">
+      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+      <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_a1PYoPxHEfC2hM5404589A"/>
+    </ownedAttribute>
+    <nestedClassifier xmi:type="uml:Signal" xmi:id="_BdAnQPxWEfCoDaYU5osqew" name="Frame">
+      <ownedAttribute xmi:type="uml:Property" xmi:id="_WD2IYPxWEfCoDaYU5osqew" name="seq_num" visibility="public">
+        <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+      </ownedAttribute>
+    </nestedClassifier>
+  </packagedElement>
+  <packagedElement xmi:type="uml:StateMachine" xmi:id="_0RjE0PxQEfC2hM5404589A" name="Receiver State Machine">
+    <region xmi:type="uml:Region" xmi:id="_0RjE0fxQEfC2hM5404589A" name="Region1">
+      <transition xmi:type="uml:Transition" xmi:id="_0RjE0vxQEfC2hM5404589A" guard="_0RjE0_xQEfC2hM5404589A" source="_0RjE3_xQEfC2hM5404589A" target="_0RjE4PxQEfC2hM5404589A">
+        <ownedRule xmi:type="uml:Constraint" xmi:id="_0RjE0_xQEfC2hM5404589A">
+          <specification xmi:type="uml:OpaqueExpression" xmi:id="_0RjE1PxQEfC2hM5404589A">
+            <language>natural</language>
+            <body>next_seq_num &lt; (send_base + window_size)</body>
+          </specification>
+        </ownedRule>
+        <effect xmi:type="uml:OpaqueBehavior" xmi:id="_0RjE1fxQEfC2hM5404589A">
+          <language>Natural language</language>
+          <body>send_packet(next_seq_num); next_seq_num++;</body>
+        </effect>
+      </transition>
+      <transition xmi:type="uml:Transition" xmi:id="_0RjE1vxQEfC2hM5404589A" source="_0RjE4PxQEfC2hM5404589A" target="_0RjE4fxQEfC2hM5404589A"/>
+      <transition xmi:type="uml:Transition" xmi:id="_0RjE1_xQEfC2hM5404589A" source="_0RjE4fxQEfC2hM5404589A" target="_0RjE3_xQEfC2hM5404589A">
+        <trigger xmi:type="uml:Trigger" xmi:id="_0RjE2PxQEfC2hM5404589A">
+          <event xmi:type="uml:SignalEvent" href="slidingWindowARQ_UML.profileapp.uml#_EyUQ0PxDEfC2hM5404589A"/>
+        </trigger>
+      </transition>
+      <transition xmi:type="uml:Transition" xmi:id="_0RjE2fxQEfC2hM5404589A" source="_0RjE4fxQEfC2hM5404589A" target="_0RjE4PxQEfC2hM5404589A"/>
+      <transition xmi:type="uml:Transition" xmi:id="_0RjE2vxQEfC2hM5404589A" source="_0RjE3vxQEfC2hM5404589A" target="_0RjE3_xQEfC2hM5404589A"/>
+      <transition xmi:type="uml:Transition" xmi:id="_0RjE2_xQEfC2hM5404589A" source="_0RjE4fxQEfC2hM5404589A" target="_0RjE4fxQEfC2hM5404589A">
+        <effect xmi:type="uml:OpaqueBehavior" xmi:id="_0RjE3PxQEfC2hM5404589A">
+          <language>Natural language</language>
+          <body>send_base++;</body>
+        </effect>
+        <trigger xmi:type="uml:Trigger" xmi:id="_0RjE3fxQEfC2hM5404589A">
+          <event xmi:type="uml:SignalEvent" href="slidingWindowARQ_UML.profileapp.uml#_EyUQ0PxDEfC2hM5404589A"/>
+        </trigger>
+      </transition>
+      <transition xmi:type="uml:Transition" xmi:id="_bSz9EPxVEfCoDaYU5osqew" source="_HGHaQPxVEfCoDaYU5osqew" target="_97e2sPxUEfCoDaYU5osqew">
+        <trigger xmi:type="uml:Trigger" xmi:id="_85O6EPxVEfCoDaYU5osqew" event="_8wLEsPxVEfCoDaYU5osqew"/>
+        <trigger xmi:type="uml:Trigger" xmi:id="_Dxq2EPyZEfCoDaYU5osqew" event="_kVjD4PyMEfCoDaYU5osqew"/>
+      </transition>
+      <transition xmi:type="uml:Transition" xmi:id="_PYLmMPyZEfCoDaYU5osqew" source="_97e2sPxUEfCoDaYU5osqew" target="_MkQGAPyZEfCoDaYU5osqew">
+        <trigger xmi:type="uml:Trigger" xmi:id="_TcESYPyZEfCoDaYU5osqew" event="_kVjD4PyMEfCoDaYU5osqew"/>
+      </transition>
+      <transition xmi:type="uml:Transition" xmi:id="_gaaYIPyZEfCoDaYU5osqew" guard="_bJmGsP0FEfC9gOgqp_QnMQ" source="_MkQGAPyZEfCoDaYU5osqew" target="_Yu8hQPyZEfCoDaYU5osqew">
+        <ownedRule xmi:type="uml:Constraint" xmi:id="_bJmGsP0FEfC9gOgqp_QnMQ">
+          <specification xmi:type="uml:OpaqueExpression" xmi:id="_bJmGsf0FEfC9gOgqp_QnMQ">
+            <language>Natural language</language>
+            <body>seq_num == expected_seq_num</body>
+          </specification>
+        </ownedRule>
+        <effect xmi:type="uml:OpaqueBehavior" xmi:id="_tMUTAP0KEfC9gOgqp_QnMQ" name="increment_expected_seq">
+          <language>Natural language</language>
+          <body>expected_seq_num = expected_seq_num + 1;</body>
+        </effect>
+      </transition>
+      <transition xmi:type="uml:Transition" xmi:id="_hNdGkP0FEfC9gOgqp_QnMQ" guard="_l006UP0FEfC9gOgqp_QnMQ" source="_MkQGAPyZEfCoDaYU5osqew" target="_dYXrYP0FEfC9gOgqp_QnMQ">
+        <ownedRule xmi:type="uml:Constraint" xmi:id="_l006UP0FEfC9gOgqp_QnMQ">
+          <specification xmi:type="uml:OpaqueExpression" xmi:id="_l006Uf0FEfC9gOgqp_QnMQ">
+            <language>Natural language</language>
+            <body>seq_num > expected_seq_num &amp;&amp; seq_num &lt; expected_seq_num + receive_window</body>
+          </specification>
+        </ownedRule>
+      </transition>
+      <transition xmi:type="uml:Transition" xmi:id="_o28AcP0FEfC9gOgqp_QnMQ" guard="_sHE7gP0FEfC9gOgqp_QnMQ" source="_MkQGAPyZEfCoDaYU5osqew" target="_97e2sPxUEfCoDaYU5osqew">
+        <ownedRule xmi:type="uml:Constraint" xmi:id="_sHE7gP0FEfC9gOgqp_QnMQ">
+          <specification xmi:type="uml:OpaqueExpression" xmi:id="_sHE7gf0FEfC9gOgqp_QnMQ">
+            <language>Natural language</language>
+            <body>else</body>
+          </specification>
+        </ownedRule>
+      </transition>
+      <transition xmi:type="uml:Transition" xmi:id="_tiIHwP0GEfC9gOgqp_QnMQ" source="_dYXrYP0FEfC9gOgqp_QnMQ" target="_rJT2QP0GEfC9gOgqp_QnMQ"/>
+      <transition xmi:type="uml:Transition" xmi:id="_uUq_AP0GEfC9gOgqp_QnMQ" source="_Yu8hQPyZEfCoDaYU5osqew" target="_rJT2QP0GEfC9gOgqp_QnMQ"/>
+      <transition xmi:type="uml:Transition" xmi:id="_wa2BUP0GEfC9gOgqp_QnMQ" source="_rJT2QP0GEfC9gOgqp_QnMQ" target="_97e2sPxUEfCoDaYU5osqew"/>
+      <subvertex xmi:type="uml:Pseudostate" xmi:id="_0RjE3vxQEfC2hM5404589A" name="Initial1"/>
+      <subvertex xmi:type="uml:State" xmi:id="_0RjE3_xQEfC2hM5404589A" name="Idle"/>
+      <subvertex xmi:type="uml:State" xmi:id="_0RjE4PxQEfC2hM5404589A" name="Sending"/>
+      <subvertex xmi:type="uml:State" xmi:id="_0RjE4fxQEfC2hM5404589A" name="WaitingForAck"/>
+      <subvertex xmi:type="uml:State" xmi:id="_0RjE4vxQEfC2hM5404589A" name="State11"/>
+      <subvertex xmi:type="uml:State" xmi:id="_97e2sPxUEfCoDaYU5osqew" name="Listening"/>
+      <subvertex xmi:type="uml:Pseudostate" xmi:id="_HGHaQPxVEfCoDaYU5osqew" name="Initial13"/>
+      <subvertex xmi:type="uml:Pseudostate" xmi:id="_MkQGAPyZEfCoDaYU5osqew" name="Choice15" kind="choice"/>
+      <subvertex xmi:type="uml:State" xmi:id="_Yu8hQPyZEfCoDaYU5osqew" name="DeliverFrame"/>
+      <subvertex xmi:type="uml:State" xmi:id="_dYXrYP0FEfC9gOgqp_QnMQ" name="Buffer_Frame"/>
+      <subvertex xmi:type="uml:State" xmi:id="_rJT2QP0GEfC9gOgqp_QnMQ" name="Send_ACK"/>
+    </region>
+  </packagedElement>
+  <packagedElement xmi:type="uml:SignalEvent" xmi:id="_8wLEsPxVEfCoDaYU5osqew" name="Frame_Received"/>
+  <packagedElement xmi:type="uml:Package" xmi:id="_iC0zUPyMEfCoDaYU5osqew" name="Events_Library">
+    <packagedElement xmi:type="uml:SignalEvent" xmi:id="_kVjD4PyMEfCoDaYU5osqew" name="SignalEvent1" signal="_BdAnQPxWEfCoDaYU5osqew"/>
+    <packagedElement xmi:type="uml:TimeEvent" xmi:id="_QQ1TwP0NEfC9gOgqp_QnMQ" name="TimeEvent2">
+      <when xmi:type="uml:TimeExpression" xmi:id="_VVYLsP0NEfC9gOgqp_QnMQ">
+        <expr xmi:type="uml:OpaqueExpression" xmi:id="_VVYLsf0NEfC9gOgqp_QnMQ">
+          <language>Natural language</language>
+          <body>50ms</body>
+        </expr>
+      </when>
+    </packagedElement>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_qJti8P3hEfC9L-xk1Nnf-A" name="PacketBuffer"/>
+  <packagedElement xmi:type="uml:Class" xmi:id="_yRydUP3hEfC9L-xk1Nnf-A" name="CommunicationChannel"/>
+  <packagedElement xmi:type="uml:Class" xmi:id="_MRA_cP3iEfC9L-xk1Nnf-A" name="SlidingWindowSystem">
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_OztlsP3iEfC9L-xk1Nnf-A" name="buffer" visibility="protected" type="_qJti8P3hEfC9L-xk1Nnf-A"/>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_Vfs8kP3iEfC9L-xk1Nnf-A" name="network" visibility="package" type="_yRydUP3hEfC9L-xk1Nnf-A"/>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_d-OyoP3jEfC9L-xk1Nnf-A" name="sender_inst" type="_PTi5EPwxEfC2hM5404589A"/>
+  </packagedElement>
+  <profileApplication xmi:type="uml:ProfileApplication" xmi:id="_vNA28PwvEfC2hM5404589A">
+    <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_vNA28fwvEfC2hM5404589A" source="http://www.eclipse.org/uml2/2.0.0/UML">
+      <references xmi:type="ecore:EPackage" href="pathmap://PAPYRUS_ACTIONLANGUAGE_PROFILE/ActionLanguage-Profile.profile.uml#_Kv8EIKFXEeS_KNX0nfvIVQ"/>
+    </eAnnotations>
+    <appliedProfile xmi:type="uml:Profile" href="pathmap://PAPYRUS_ACTIONLANGUAGE_PROFILE/ActionLanguage-Profile.profile.uml#ActionLanguage"/>
+  </profileApplication>
+</uml:Model>

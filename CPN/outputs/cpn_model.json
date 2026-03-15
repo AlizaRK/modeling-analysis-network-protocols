@@ -1,0 +1,477 @@
+{
+  "model_name": "Sliding Window ARQ - Selective Repeat",
+  "parameters": {
+    "window_size": 10,
+    "timeout_ms": 100,
+    "network_delay_ms": 20,
+    "jitter_ms": 5
+  },
+  "places": [
+    {
+      "name": "SendWindow",
+      "type": "list int",
+      "initial_marking": "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]",
+      "description": "Sender's sliding window - tracks which frames can be sent",
+      "position": [
+        100,
+        100
+      ]
+    },
+    {
+      "name": "NextFrameToSend",
+      "type": "int",
+      "initial_marking": "0",
+      "description": "Next frame sequence number to send",
+      "position": [
+        100,
+        200
+      ]
+    },
+    {
+      "name": "LastAckReceived",
+      "type": "int",
+      "initial_marking": "-1",
+      "description": "Last acknowledged frame sequence number",
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "name": "SenderReady",
+      "type": "bool",
+      "initial_marking": "true",
+      "description": "Indicates if sender is ready to transmit",
+      "position": [
+        100,
+        400
+      ]
+    },
+    {
+      "name": "SenderTimers",
+      "type": "list (int * int)",
+      "initial_marking": "[]",
+      "description": "List of (seq_num, timeout_time) for sent frames",
+      "position": [
+        100,
+        500
+      ]
+    },
+    {
+      "name": "RecvWindow",
+      "type": "list int",
+      "initial_marking": "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]",
+      "description": "Receiver's window - tracks expected frames",
+      "position": [
+        500,
+        100
+      ]
+    },
+    {
+      "name": "NextFrameExpected",
+      "type": "int",
+      "initial_marking": "0",
+      "description": "Next expected frame in sequence",
+      "position": [
+        500,
+        200
+      ]
+    },
+    {
+      "name": "LastFrameAckd",
+      "type": "int",
+      "initial_marking": "-1",
+      "description": "Last frame that was acknowledged",
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "name": "ReceiverReady",
+      "type": "bool",
+      "initial_marking": "true",
+      "description": "Indicates if receiver is ready",
+      "position": [
+        500,
+        400
+      ]
+    },
+    {
+      "name": "NetworkChannel_Frames",
+      "type": "product int * int * bool timed",
+      "initial_marking": "empty",
+      "description": "Frames in transit (delay=20ms, jitter=5ms)",
+      "position": [
+        300,
+        150
+      ]
+    },
+    {
+      "name": "NetworkChannel_ACKs",
+      "type": "product int * bool timed",
+      "initial_marking": "empty",
+      "description": "ACKs in transit (delay=20ms, jitter=5ms)",
+      "position": [
+        300,
+        350
+      ]
+    },
+    {
+      "name": "PacketBuffer",
+      "type": "product int * (product int * int * bool) * bool",
+      "initial_marking": "[]",
+      "description": "Shared buffer for out-of-order packets (capacity=10)",
+      "position": [
+        500,
+        500
+      ]
+    },
+    {
+      "name": "BufferMutex",
+      "type": "with LOCKED | UNLOCKED",
+      "initial_marking": "UNLOCKED",
+      "description": "Mutex controlling access to packet buffer (maxAccess=1ms)",
+      "position": [
+        500,
+        600
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "name": "sendData",
+      "inputs": [
+        "SenderReady",
+        "SendWindow",
+        "NextFrameToSend"
+      ],
+      "outputs": [
+        "NetworkChannel_Frames",
+        "SenderTimers",
+        "NextFrameToSend",
+        "SendWindow"
+      ],
+      "guard": "length(sendWindow) > 0 andalso senderReady = true",
+      "action": "let\n    val nextSeq = hd(sendWindow)\n    val data = generateRandomData()\n    val packet = (nextSeq, data, true)\n    val timer = (nextSeq, currentTime() + 100)\nin\n    (packet, timer, nextSeq + 1, tl(sendWindow))\nend",
+      "timing": 20,
+      "probability": null,
+      "description": "Sender transmits a data frame",
+      "position": [
+        200,
+        100
+      ]
+    },
+    {
+      "name": "receiveACK",
+      "inputs": [
+        "NetworkChannel_ACKs",
+        "LastAckReceived",
+        "SendWindow",
+        "SenderTimers"
+      ],
+      "outputs": [
+        "LastAckReceived",
+        "SendWindow",
+        "SenderTimers"
+      ],
+      "guard": "ack_seq > lastAck andalso isPositive = true",
+      "action": "let\n    val newLastAck = ack_seq\n    val newWindow = slideWindow(sendWindow, ack_seq, lastAck)\n    val newTimers = removeTimer(timers, ack_seq)\nin\n    (newLastAck, newWindow, newTimers)\nend",
+      "timing": null,
+      "probability": null,
+      "description": "Sender receives ACK and updates window",
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "name": "handleTimeout",
+      "inputs": [
+        "SenderTimers",
+        "SendWindow"
+      ],
+      "outputs": [
+        "NetworkChannel_Frames",
+        "SenderTimers"
+      ],
+      "guard": "exists timer in timers where currentTime() >= timeout_time",
+      "action": "let\n    val (seq_num, _) = findTimedOutFrame(timers)\n    val packet = (seq_num, retrieveData(seq_num), true)\n    val newTimer = (seq_num, currentTime() + 100)\n    val newTimers = updateTimer(timers, newTimer)\nin\n    (packet, newTimers)\nend",
+      "timing": 20,
+      "probability": null,
+      "description": "Retransmit frame after timeout",
+      "position": [
+        200,
+        500
+      ]
+    },
+    {
+      "name": "receiveFrame",
+      "inputs": [
+        "NetworkChannel_Frames",
+        "RecvWindow",
+        "NextFrameExpected",
+        "BufferMutex"
+      ],
+      "outputs": [
+        "NetworkChannel_ACKs",
+        "NextFrameExpected",
+        "PacketBuffer",
+        "BufferMutex"
+      ],
+      "guard": "seq_num in recvWindow",
+      "action": "let\n    val (seq, data, _) = packet\nin\n    if seq = nextExpected then\n        (* In-order frame *)\n        let\n            val ack = (seq, true)\n            val newNext = seq + 1\n        in\n            (ack, newNext, buffer, UNLOCKED)\n        end\n    else if seq > nextExpected then\n        (* Out-of-order frame - buffer it *)\n        let\n            val ack = (seq, true)\n            val newBuffer = addToBuffer(buffer, packet)\n        in\n            (ack, nextExpected, newBuffer, UNLOCKED)\n        end\n    else\n        (* Duplicate - just ACK *)\n        ((seq, true), nextExpected, buffer, UNLOCKED)\nend",
+      "timing": 20,
+      "probability": null,
+      "description": "Receiver processes incoming frame",
+      "position": [
+        400,
+        150
+      ]
+    },
+    {
+      "name": "sendACK",
+      "inputs": [
+        "ReceiverReady",
+        "LastFrameAckd"
+      ],
+      "outputs": [
+        "NetworkChannel_ACKs",
+        "LastFrameAckd"
+      ],
+      "guard": "receiverReady = true",
+      "action": "let\n    val ack = (lastAckd + 1, true)\nin\n    (ack, lastAckd + 1)\nend",
+      "timing": 20,
+      "probability": null,
+      "description": "Receiver sends acknowledgment",
+      "position": [
+        400,
+        350
+      ]
+    },
+    {
+      "name": "retrieveFrame",
+      "inputs": [
+        "PacketBuffer",
+        "BufferMutex",
+        "NextFrameExpected"
+      ],
+      "outputs": [
+        "PacketBuffer",
+        "BufferMutex",
+        "NextFrameExpected"
+      ],
+      "guard": "mutex = UNLOCKED andalso bufferContains(buffer, nextExpected)",
+      "action": "let\n    val (frames, newBuffer) = extractConsecutiveFrames(buffer, nextExpected)\n    val newNext = nextExpected + length(frames)\nin\n    (newBuffer, UNLOCKED, newNext)\nend",
+      "timing": null,
+      "probability": null,
+      "description": "Retrieve consecutive frames from buffer",
+      "position": [
+        550,
+        500
+      ]
+    },
+    {
+      "name": "frameDropped",
+      "inputs": [
+        "NetworkChannel_Frames"
+      ],
+      "outputs": [],
+      "guard": "true",
+      "action": "(* Frame is dropped - simulates packet loss *)",
+      "timing": null,
+      "probability": 0.05,
+      "description": "Simulate frame loss in network (5% probability)",
+      "position": [
+        300,
+        100
+      ]
+    },
+    {
+      "name": "ackDropped",
+      "inputs": [
+        "NetworkChannel_ACKs"
+      ],
+      "outputs": [],
+      "guard": "true",
+      "action": "(* ACK is dropped - simulates ACK loss *)",
+      "timing": null,
+      "probability": 0.05,
+      "description": "Simulate ACK loss in network (5% probability)",
+      "position": [
+        300,
+        400
+      ]
+    }
+  ],
+  "arcs": [
+    {
+      "source": "SenderReady",
+      "target": "sendData",
+      "inscription": "senderReady",
+      "type": "normal"
+    },
+    {
+      "source": "SendWindow",
+      "target": "sendData",
+      "inscription": "sendWindow",
+      "type": "normal"
+    },
+    {
+      "source": "NextFrameToSend",
+      "target": "sendData",
+      "inscription": "nextSeq",
+      "type": "normal"
+    },
+    {
+      "source": "sendData",
+      "target": "NetworkChannel_Frames",
+      "inscription": "packet@+20",
+      "type": "normal"
+    },
+    {
+      "source": "sendData",
+      "target": "SenderTimers",
+      "inscription": "timers^^[timer]",
+      "type": "normal"
+    },
+    {
+      "source": "sendData",
+      "target": "NextFrameToSend",
+      "inscription": "nextSeq + 1",
+      "type": "normal"
+    },
+    {
+      "source": "sendData",
+      "target": "SendWindow",
+      "inscription": "tl(sendWindow)",
+      "type": "normal"
+    },
+    {
+      "source": "NetworkChannel_ACKs",
+      "target": "receiveACK",
+      "inscription": "(ack_seq, isPositive)",
+      "type": "normal"
+    },
+    {
+      "source": "LastAckReceived",
+      "target": "receiveACK",
+      "inscription": "lastAck",
+      "type": "normal"
+    },
+    {
+      "source": "SendWindow",
+      "target": "receiveACK",
+      "inscription": "sendWindow",
+      "type": "normal"
+    },
+    {
+      "source": "SenderTimers",
+      "target": "receiveACK",
+      "inscription": "timers",
+      "type": "normal"
+    },
+    {
+      "source": "receiveACK",
+      "target": "LastAckReceived",
+      "inscription": "newLastAck",
+      "type": "normal"
+    },
+    {
+      "source": "receiveACK",
+      "target": "SendWindow",
+      "inscription": "newWindow",
+      "type": "normal"
+    },
+    {
+      "source": "receiveACK",
+      "target": "SenderTimers",
+      "inscription": "newTimers",
+      "type": "normal"
+    },
+    {
+      "source": "SenderTimers",
+      "target": "handleTimeout",
+      "inscription": "timers",
+      "type": "normal"
+    },
+    {
+      "source": "SendWindow",
+      "target": "handleTimeout",
+      "inscription": "sendWindow",
+      "type": "normal"
+    },
+    {
+      "source": "handleTimeout",
+      "target": "NetworkChannel_Frames",
+      "inscription": "packet@+20",
+      "type": "normal"
+    },
+    {
+      "source": "handleTimeout",
+      "target": "SenderTimers",
+      "inscription": "newTimers",
+      "type": "normal"
+    },
+    {
+      "source": "NetworkChannel_Frames",
+      "target": "receiveFrame",
+      "inscription": "packet",
+      "type": "normal"
+    },
+    {
+      "source": "RecvWindow",
+      "target": "receiveFrame",
+      "inscription": "recvWindow",
+      "type": "normal"
+    },
+    {
+      "source": "NextFrameExpected",
+      "target": "receiveFrame",
+      "inscription": "nextExpected",
+      "type": "normal"
+    },
+    {
+      "source": "BufferMutex",
+      "target": "receiveFrame",
+      "inscription": "mutex",
+      "type": "normal"
+    },
+    {
+      "source": "receiveFrame",
+      "target": "NetworkChannel_ACKs",
+      "inscription": "ack@+20",
+      "type": "normal"
+    },
+    {
+      "source": "receiveFrame",
+      "target": "NextFrameExpected",
+      "inscription": "newNext",
+      "type": "normal"
+    },
+    {
+      "source": "receiveFrame",
+      "target": "PacketBuffer",
+      "inscription": "newBuffer",
+      "type": "normal"
+    },
+    {
+      "source": "receiveFrame",
+      "target": "BufferMutex",
+      "inscription": "UNLOCKED",
+      "type": "normal"
+    },
+    {
+      "source": "NetworkChannel_Frames",
+      "target": "frameDropped",
+      "inscription": "packet",
+      "type": "normal"
+    },
+    {
+      "source": "NetworkChannel_ACKs",
+      "target": "ackDropped",
+      "inscription": "ack",
+      "type": "normal"
+    }
+  ]
+}

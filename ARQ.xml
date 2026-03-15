@@ -1,0 +1,1052 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+clock global_time;
+// CONSTANTS
+const int N = 4;              // Window Size
+const int MAX_SEQ = 8;        // Sequence space size (Must be &gt;= 2*N)
+const int LATENCY = 10;    // Network delay
+const int TIMEOUT = 20;    // Retransmission timer
+const int MAX_LOSS = 2;    // Bounded loss to pass liveness
+// TYPES
+typedef int[0, MAX_SEQ-1] id_t; // Packet ID type (0 to 7)
+
+// CHANNELS
+
+broadcast chan send_packet, deliver_packet;
+broadcast chan send_ack, deliver_ack;
+int msg_id;  // Carries the Packet/ACK ID during synchronization
+// Forward path: Sender -&gt; Medium -&gt; Receiver
+//broadcast chan send_packet[id_t];
+//broadcast chan deliver_packet[id_t];
+
+// Return path: Receiver -&gt; Medium -&gt; Sender
+//broadcast chan send_ack[id_t];
+//broadcast chan deliver_ack[id_t];
+
+// HELPER FUNCTIONS (Global)
+// Checks if a sequence number 's' is within window [base, base+N)
+bool inside_window(int base, int s) {
+    int max = base + N;
+    if (max &lt;= MAX_SEQ) {
+        return (s &gt;= base &amp;&amp; s &lt; max);
+    } else {
+        // Window wraps around MAX_SEQ
+        return (s &gt;= base || s &lt; (max - MAX_SEQ));
+    }
+}
+</declaration>
+	<template>
+		<name x="5" y="5">Sender</name>
+		<declaration>clock x;
+int[0, MAX_SEQ-1] base = 0;       // Oldest unacknowledged packet
+int[0, MAX_SEQ-1] next_seq = 0;   // Next packet to be sent
+bool is_acked[MAX_SEQ];           // Tracks if packet 'i' is ACKed
+int tmp_id;
+// Helper to count how many frames are currently in flight/unacked
+int count() {
+    if (next_seq &gt;= base) return next_seq - base;
+    else return (MAX_SEQ - base) + next_seq;
+}
+</declaration>
+		<location id="id0" x="-102" y="-297">
+			<name x="-85" y="-314">Idle</name>
+			<label kind="invariant" x="-112" y="-280">x &lt;= TIMEOUT</label>
+		</location>
+		<location id="id1" x="-221" y="-42">
+			<name x="-196" y="-59">ProcessACK</name>
+			<label kind="invariant" x="-195" y="-17">x &lt;= 0</label>
+		</location>
+		<init ref="id0"/>
+		<transition id="id2">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="guard" x="-595" y="-229">!is_acked[base]</label>
+			<label kind="assignment" x="-432" y="-42">x = 0</label>
+			<nail x="-450" y="-42"/>
+			<nail x="-450" y="-297"/>
+		</transition>
+		<transition id="id3">
+			<source ref="id1"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-391" y="18">is_acked[base]</label>
+			<label kind="assignment" x="-366" y="52">is_acked[base] = false, base = (base+1) % MAX_SEQ</label>
+			<nail x="-196" y="35"/>
+			<nail x="-264" y="35"/>
+		</transition>
+		<transition id="id4">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-340" y="-212">deliver_ack?</label>
+			<label kind="assignment" x="-425" y="-178">tmp_id = msg_id, x= 0, is_acked [tmp_id] = true</label>
+			<label kind="comments" x="-331" y="-110">ReceiveACK</label>
+			<nail x="-221" y="-144"/>
+		</transition>
+		<transition id="id5">
+			<source ref="id0"/>
+			<target ref="id0"/>
+			<label kind="select" x="-42" y="-255">i : id_t</label>
+			<label kind="guard" x="-42" y="-229">inside_window(base, i) &amp;&amp; !is_acked[i] &amp;&amp; x &gt;= TIMEOUT</label>
+			<label kind="synchronisation" x="-34" y="-204">send_packet!</label>
+			<label kind="assignment" x="-42" y="-280">msg_id = i, x=0</label>
+			<label kind="comments" x="-178" y="-153">Retransmit Packet (Timeout Simulation)
+Non-deterministically retransmits any unacked packet in the window.</label>
+			<nail x="-34" y="-178"/>
+			<nail x="-170" y="-178"/>
+		</transition>
+		<transition id="id6">
+			<source ref="id0"/>
+			<target ref="id0"/>
+			<label kind="guard" x="-145" y="-450">count() &lt; N</label>
+			<label kind="synchronisation" x="-170" y="-425">send_packet!</label>
+			<label kind="assignment" x="-51" y="-399">is_acked[next_seq] = false,
+msg_id = next_seq,
+next_seq = (next_seq + 1) % MAX_SEQ</label>
+			<label kind="comments" x="-170" y="-476">Send new Packet</label>
+			<nail x="-153" y="-399"/>
+			<nail x="-60" y="-399"/>
+		</transition>
+	</template>
+	<template>
+		<name>Receiver</name>
+		<declaration>clock r_clock; // This tracks time since the last window slide
+int[0, MAX_SEQ-1] r_base = 0; // Expected sequence number
+bool received[MAX_SEQ];       // Buffer for out-of-order packets
+int tmp_id;
+int current_pkt;</declaration>
+		<location id="id7" x="-82433" y="-459">
+			<name x="-82443" y="-493">Wait</name>
+		</location>
+		<location id="id8" x="-82433" y="-136">
+			<name x="-82501" y="-170">SendAck</name>
+			<label kind="invariant" x="-82443" y="-119">r_clock &lt;= 0</label>
+		</location>
+		<init ref="id7"/>
+		<transition id="id9">
+			<source ref="id8"/>
+			<target ref="id8"/>
+			<label kind="guard" x="-82356" y="-76">received[r_base]</label>
+			<label kind="assignment" x="-82543" y="0">received[r_base] = false, r_base = (r_base + 1) % MAX_SEQ, r_clock = 0</label>
+			<label kind="comments" x="-82688" y="68">This slides the receiver window as far as possible before sending the ACK. SlidingWindow Logic</label>
+			<nail x="-82323" y="-8"/>
+			<nail x="-82535" y="-8"/>
+		</transition>
+		<transition id="id10">
+			<source ref="id8"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-82246" y="-263">!received[r_base]</label>
+			<label kind="synchronisation" x="-82246" y="-238">send_ack!</label>
+			<label kind="assignment" x="-82415" y="-136">msg_id = tmp_id</label>
+			<nail x="-82263" y="-136"/>
+			<nail x="-82263" y="-459"/>
+		</transition>
+		<transition id="id11">
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="-82603" y="-391">deliver_packet?</label>
+			<label kind="assignment" x="-82951" y="-365">r_clock = 0,tmp_id = msg_id,
+received[tmp_id] = (inside_window(r_base, tmp_id) ? true : received[tmp_id])</label>
+			<label kind="comments" x="-82569" y="-306">Receive Packet</label>
+		</transition>
+	</template>
+	<template>
+		<name>Medium</name>
+		<parameter>broadcast chan &amp;in_chan, broadcast chan &amp;out_chan</parameter>
+		<declaration>int tmp_id;
+int loss_count;
+clock y;
+</declaration>
+		<location id="id12" x="-153" y="-518">
+			<name x="-163" y="-552">Idle</name>
+		</location>
+		<location id="id13" x="-272" y="-365">
+			<name x="-297" y="-348">Check</name>
+			<label kind="comments" x="-282" y="-306">This state is "entry-exit" in zero time; it exists only to perform the "dice roll" for packet loss.</label>
+			<urgent/>
+		</location>
+		<location id="id14" x="-25" y="-365">
+			<name x="-8" y="-382">Transmitting</name>
+			<label kind="invariant" x="-35" y="-348">y&lt;= 10</label>
+		</location>
+		<branchpoint id="id15" x="-119" y="-255"/>
+		<branchpoint id="id16" x="-153" y="-365"/>
+		<init ref="id12"/>
+		<transition id="id17">
+			<source ref="id15"/>
+			<target ref="id14"/>
+			<label kind="assignment" x="-101" y="-310">y=0</label>
+			<label kind="probability" x="-101" y="-293">9</label>
+		</transition>
+		<transition id="id18" controllable="false">
+			<source ref="id13"/>
+			<target ref="id15"/>
+		</transition>
+		<transition id="id19">
+			<source ref="id14"/>
+			<target ref="id12"/>
+			<label kind="guard" x="-8" y="-518">y &gt;= LATENCY</label>
+			<label kind="synchronisation" x="0" y="-493">out_chan!</label>
+			<label kind="assignment" x="-8" y="-467">msg_id = tmp_id, loss_count = 0</label>
+			<nail x="-25" y="-518"/>
+		</transition>
+		<transition id="id20">
+			<source ref="id16"/>
+			<target ref="id12"/>
+			<label kind="assignment" x="-144" y="-459">loss_count++</label>
+			<label kind="probability" x="-144" y="-425">1</label>
+		</transition>
+		<transition id="id21" controllable="false">
+			<source ref="id13"/>
+			<target ref="id16"/>
+			<label kind="guard" x="-340" y="-272">loss_count &lt; MAX_LOSS</label>
+		</transition>
+		<transition id="id22">
+			<source ref="id12"/>
+			<target ref="id13"/>
+			<label kind="synchronisation" x="-348" y="-493">in_chan?</label>
+			<label kind="assignment" x="-408" y="-459">tmp_id = msg_id</label>
+			<nail x="-272" y="-518"/>
+		</transition>
+	</template>
+	<system>// Instantiate processes
+P_Sender = Sender();
+P_Receiver = Receiver();
+// two mediums with their specific channels
+
+P_Medium = Medium(send_packet, deliver_packet); // Use for send_packet / deliver_packet 
+A_Medium = Medium(send_ack, deliver_ack); // Use for send_ack / deliver_ack
+
+// List processes to be active
+system P_Sender, P_Medium,A_Medium, P_Receiver;</system>
+	<queries>
+		<query>
+			<formula>A[] not deadlock</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>Pr[&lt;= 100] (&lt;&gt; P_Receiver.r_base == 5)</formula>
+			<comment/>
+			<result outcome="success" type="interval" value="≤ 0.0499441 (95% CI)" timestamp="2026-03-14 08:20:57 +0100">
+				<details>≤ 0.0499441 (95% CI)</details>
+			</result>
+		</query>
+		<query>
+			<formula>Pr[&lt;= 200] (&lt;&gt; P_Receiver.r_base == MAX_SEQ-1)</formula>
+			<comment/>
+			<result outcome="success" type="interval" value="≤ 0.0499441 (95% CI)" timestamp="2026-03-14 02:15:24 +0100">
+				<details>≤ 0.0499441 (95% CI)</details>
+			</result>
+		</query>
+		<query>
+			<formula>E[&lt;= 500; 1000] (max: P_Medium.loss_count)</formula>
+			<comment/>
+			<result outcome="success" type="quantity" value="1.869 ± 0.0213126 (95% CI)" timestamp="2026-03-14 02:17:31 +0100">
+				<details>1.869 ± 0.0213126 (95% CI)</details>
+				<plot title="Probability Density Distribution" xaxis="max: P_Medium.loss_count" yaxis="probability density">
+					<series title="density" type="b(1.000000)" color="0x0000ff" encoding="csv">0.0,0.002
+1.0,0.127
+2.0,0.871
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">1.869,0.0
+1.869,0.871
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=1, bucket count=3
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 2]
+Mean estimate of displayed sample: 1.869 ± 0.021313 (95% CI)</comment>
+				</plot>
+				<plot title="Probability Distribution" xaxis="max: P_Medium.loss_count" yaxis="probability">
+					<series title="probability" type="b(1.000000)" color="0x0000ff" encoding="csv">0.0,0.002
+1.0,0.127
+2.0,0.871
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">1.869,0.0
+1.869,0.871
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=1, bucket count=3
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 2]
+Mean estimate of displayed sample: 1.869 ± 0.021313 (95% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Distribution" xaxis="max: P_Medium.loss_count" yaxis="probability">
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">0.0,0.0
+1.0,0.002
+2.0,0.129
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">1.869,0.0
+1.869,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=1, bucket count=3
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 2]
+Mean estimate of displayed sample: 1.869 ± 0.021313 (95% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Confidence Intervals" xaxis="max: P_Medium.loss_count" yaxis="probability">
+					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">0.0,0.003682083896865672
+1.0,0.007205838911457498
+2.0,0.15137141531495626
+					</series>
+					<series title="lower limit" type="k" color="0xdd0000" encoding="csv">0.0,0.0
+1.0,2.4230111687723196E-4
+2.0,0.10884057120623476
+					</series>
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">0.0,0.0
+1.0,0.002
+2.0,0.129
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">1.869,0.0
+1.869,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=1, bucket count=3
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 2]
+Mean estimate of displayed sample: 1.869 ± 0.021313 (95% CI)</comment>
+				</plot>
+				<plot title="Frequency Histogram" xaxis="max: P_Medium.loss_count" yaxis="count">
+					<series title="count" type="b(1.000000)" color="0x0000ff" encoding="csv">0.0,2.0
+1.0,127.0
+2.0,871.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">1.869,0.0
+1.869,871.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=1, bucket count=3
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 2]
+Mean estimate of displayed sample: 1.869 ± 0.021313 (95% CI)</comment>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula>Pr[&lt;= 1000] (&lt;&gt; P_Receiver.r_base == MAX_SEQ)</formula>
+			<comment/>
+			<result outcome="success" type="interval" value="≤ 0.0499441 (95% CI)" timestamp="2026-03-14 02:21:52 +0100">
+				<details>≤ 0.0499441 (95% CI)</details>
+			</result>
+		</query>
+		<query>
+			<formula>E&lt;&gt; P_Receiver.r_base == 1</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-03-14 01:44:09 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>E&lt;&gt; P_Receiver.r_base == 5</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-03-14 16:01:09 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>A&lt;&gt; (P_Sender.count() == N imply P_Sender.count() &lt; N)</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-03-14 16:01:17 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>A&lt;&gt; (P_Sender.is_acked[0] imply P_Sender.is_acked[0])</formula>
+			<comment>4. Liveness - every sent packet eventually gets ACKed</comment>
+			<result outcome="success" type="quality" timestamp="2026-03-14 16:01:21 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>A&lt;&gt; (P_Sender.count() == N imply ((P_Sender.count() &lt; N)))</formula>
+			<comment>this is a "non-blocking" property. 
+It proves that if the sender's window ever becomes full, it is guaranteed to eventually clear a spot, meaning your protocol is robust against deadlocks.</comment>
+			<result outcome="success" type="quality" timestamp="2026-03-14 16:02:14 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>A&lt;&gt; (P_Sender.count() == N imply P_Sender.count() &lt; N)</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-03-10 13:28:45 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>simulate [&lt;=500] { P_Receiver.r_base}</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-03-14 16:02:28 +0100">
+				<plot title="Simulations (1)" xaxis="time" yaxis="value">
+					<series title="P_Receiver.r_base" type="l" color="0xff0000" encoding="csv">0.0,0.0
+348.4264555250031,0.0
+348.4264555250031,1.0
+448.4264555250031,1.0
+448.4264555250031,4.0
+500.0,4.0
+					</series>
+					<comment/>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula>simulate [&lt;=500] { P_Receiver.r_base, P_Sender.base }</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-03-14 02:11:06 +0100">
+				<plot title="Simulations (1)" xaxis="time" yaxis="value">
+					<series title="P_Receiver.r_base" type="l" color="0xff0000" encoding="csv">0.0,0.0
+110.0,0.0
+110.0,2.0
+450.0,2.0
+450.0,4.0
+500.000002,4.0
+					</series>
+					<series title="P_Sender.base" type="l" color="0x00ffff" encoding="csv">0.0,0.0
+170.0,0.0
+170.0,1.0
+500.000002,1.0
+					</series>
+					<comment/>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula>Pr[&lt;= 500] (&lt;&gt; P_Medium.loss_count == 1)</formula>
+			<comment/>
+			<result outcome="success" type="interval" value="≥ 0.950056 (95% CI)" timestamp="2026-03-14 02:25:43 +0100">
+				<details>≥ 0.950056 (95% CI)</details>
+				<plot title="Probability Density Distribution" xaxis="run duration in time" yaxis="probability density">
+					<series title="density" type="b(31.727732)" color="0x0000ff" encoding="csv">3.7994513055309658,0.011819313121736777
+35.52718337740081,0.010506056108210468
+67.25491544927065,0.002626514027052617
+98.98264752114049,0.003502018702736823
+130.71037959301034,0.0013132570135263085
+162.43811166488018,0.0013132570135263085
+194.16584373675002,0.0
+225.89357580861986,0.0
+257.6213078804897,4.377523378421029E-4
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">57.60980868511288,0.0
+57.60980868511288,0.011819313121736777
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=31.728, bucket count=9
+Runs: 72 in total, 72 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [3.799, 289.3]
+Mean estimate of displayed sample: 57.61 ± 12.05 (95% CI)</comment>
+				</plot>
+				<plot title="Probability Density Confidence Intervals" xaxis="run duration in time" yaxis="probability density">
+					<series title="upper limit" type="b(31.727732)" color="0xa0a0ff" encoding="csv">3.7994513055309658,0.4970140706287165
+35.52718337740081,0.4542961110255666
+67.25491544927065,0.172608584683674
+98.98264752114049,0.20724687066674882
+130.71037959301034,0.11697481982594136
+162.43811166488018,0.11697481982594136
+194.16584373675002,0.04994408370585468
+225.89357580861986,0.04994408370585468
+257.6213078804897,0.07497131085391912
+					</series>
+					<series title="lower limit" type="b(31.727732)" color="0x0000ff" encoding="csv">3.7994513055309658,0.26361094760164844
+35.52718337740081,0.22656342448818495
+67.25491544927065,0.031197509141384482
+98.98264752114049,0.04920803927064098
+130.71037959301034,0.008676497316343764
+162.43811166488018,0.008676497316343764
+194.16584373675002,0.0
+225.89357580861986,0.0
+257.6213078804897,3.515744052335976E-4
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">57.60980868511288,0.0
+57.60980868511288,0.01566497313778613
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=31.728, bucket count=9
+Runs: 72 in total, 72 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [3.799, 289.3]
+Mean estimate of displayed sample: 57.61 ± 12.05 (95% CI)</comment>
+				</plot>
+				<plot title="Probability Distribution" xaxis="run duration in time" yaxis="probability">
+					<series title="probability" type="b(31.727732)" color="0x0000ff" encoding="csv">3.7994513055309658,0.375
+35.52718337740081,0.3333333333333333
+67.25491544927065,0.08333333333333333
+98.98264752114049,0.1111111111111111
+130.71037959301034,0.041666666666666664
+162.43811166488018,0.041666666666666664
+194.16584373675002,0.0
+225.89357580861986,0.0
+257.6213078804897,0.013888888888888888
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">57.60980868511288,0.0
+57.60980868511288,0.375
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=31.728, bucket count=9
+Runs: 72 in total, 72 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [3.799, 289.3]
+Mean estimate of displayed sample: 57.61 ± 12.05 (95% CI)</comment>
+				</plot>
+				<plot title="Probability Confidence Intervals" xaxis="run duration in time" yaxis="probability">
+					<series title="upper limit" type="b(31.727732)" color="0xa0a0ff" encoding="csv">3.7994513055309658,0.4970140706287165
+35.52718337740081,0.4542961110255666
+67.25491544927065,0.172608584683674
+98.98264752114049,0.20724687066674882
+130.71037959301034,0.11697481982594136
+162.43811166488018,0.11697481982594136
+194.16584373675002,0.04994408370585468
+225.89357580861986,0.04994408370585468
+257.6213078804897,0.07497131085391912
+					</series>
+					<series title="lower limit" type="b(31.727732)" color="0x0000ff" encoding="csv">3.7994513055309658,0.26361094760164844
+35.52718337740081,0.22656342448818495
+67.25491544927065,0.031197509141384482
+98.98264752114049,0.04920803927064098
+130.71037959301034,0.008676497316343764
+162.43811166488018,0.008676497316343764
+194.16584373675002,0.0
+225.89357580861986,0.0
+257.6213078804897,3.515744052335976E-4
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">57.60980868511288,0.0
+57.60980868511288,0.4970140706287165
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=31.728, bucket count=9
+Runs: 72 in total, 72 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [3.799, 289.3]
+Mean estimate of displayed sample: 57.61 ± 12.05 (95% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Distribution" xaxis="run duration in time" yaxis="probability">
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">3.7994513055309658,0.0
+35.52718337740081,0.375
+67.25491544927065,0.7083333333333334
+98.98264752114049,0.7916666666666666
+130.71037959301034,0.9027777777777778
+162.43811166488018,0.9444444444444444
+194.16584373675002,0.9861111111111112
+225.89357580861986,0.9861111111111112
+257.6213078804897,0.9861111111111112
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">57.60980868511288,0.0
+57.60980868511288,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=31.728, bucket count=9
+Runs: 72 in total, 72 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [3.799, 289.3]
+Mean estimate of displayed sample: 57.61 ± 12.05 (95% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Confidence Intervals" xaxis="run duration in time" yaxis="probability">
+					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">3.7994513055309658,0.04994408370585468
+35.52718337740081,0.4970140706287165
+67.25491544927065,0.8095467017599333
+98.98264752114049,0.8784487970921917
+130.71037959301034,0.9600104990663975
+162.43811166488018,0.9846574628888694
+194.16584373675002,0.9996484255947664
+225.89357580861986,0.9996484255947664
+257.6213078804897,0.9996484255947664
+					</series>
+					<series title="lower limit" type="k" color="0xdd0000" encoding="csv">3.7994513055309658,0.0
+35.52718337740081,0.26361094760164844
+67.25491544927065,0.5893328452455981
+98.98264752114049,0.6797704888706283
+130.71037959301034,0.8098896595544408
+162.43811166488018,0.863821350687076
+194.16584373675002,0.9250286891460808
+225.89357580861986,0.9250286891460808
+257.6213078804897,0.9250286891460808
+					</series>
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">3.7994513055309658,0.0
+35.52718337740081,0.375
+67.25491544927065,0.7083333333333334
+98.98264752114049,0.7916666666666666
+130.71037959301034,0.9027777777777778
+162.43811166488018,0.9444444444444444
+194.16584373675002,0.9861111111111112
+225.89357580861986,0.9861111111111112
+257.6213078804897,0.9861111111111112
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">57.60980868511288,0.0
+57.60980868511288,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=31.728, bucket count=9
+Runs: 72 in total, 72 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [3.799, 289.3]
+Mean estimate of displayed sample: 57.61 ± 12.05 (95% CI)</comment>
+				</plot>
+				<plot title="Frequency Histogram" xaxis="run duration in time" yaxis="count">
+					<series title="count" type="b(31.727732)" color="0x0000ff" encoding="csv">3.7994513055309658,27.0
+35.52718337740081,24.0
+67.25491544927065,6.0
+98.98264752114049,8.0
+130.71037959301034,3.0
+162.43811166488018,3.0
+194.16584373675002,0.0
+225.89357580861986,0.0
+257.6213078804897,1.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">57.60980868511288,0.0
+57.60980868511288,27.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=31.728, bucket count=9
+Runs: 72 in total, 72 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [3.799, 289.3]
+Mean estimate of displayed sample: 57.61 ± 12.05 (95% CI)</comment>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula>simulate [&lt;= 500] { P_Sender.base, P_Sender.next_seq, P_Receiver.r_base }</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-03-14 02:27:47 +0100">
+				<plot title="Simulations (1)" xaxis="time" yaxis="value">
+					<series title="P_Sender.base" type="l" color="0xff0000" encoding="csv">0.0,0.0
+500.0,0.0
+					</series>
+					<series title="P_Sender.next_seq" type="l" color="0x00ff00" encoding="csv">0.0,0.0
+34.53626288101078,0.0
+34.53626288101078,1.0
+38.01431184526327,1.0
+38.01431184526327,2.0
+44.142249526149804,2.0
+44.142249526149804,3.0
+49.99673666879113,3.0
+49.99673666879113,4.0
+500.0,4.0
+					</series>
+					<series title="P_Receiver.r_base" type="l" color="0x0000ff" encoding="csv">0.0,0.0
+44.53626288101078,0.0
+44.53626288101078,1.0
+279.99673666879113,1.0
+279.99673666879113,4.0
+500.0,4.0
+					</series>
+					<comment/>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula>simulate [&lt;=500] { P_Receiver.r_base, P_Sender.base }</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-03-14 16:02:43 +0100">
+				<plot title="Simulations (1)" xaxis="time" yaxis="value">
+					<series title="P_Receiver.r_base" type="l" color="0xff0000" encoding="csv">0.0,0.0
+175.84946531353597,0.0
+175.84946531353597,2.0
+225.84946531353597,2.0
+225.84946531353597,3.0
+395.849465313536,3.0
+395.849465313536,4.0
+473.34182775363405,4.0
+473.34182775363405,5.0
+500.0,5.0
+					</series>
+					<series title="P_Sender.base" type="l" color="0x00ffff" encoding="csv">0.0,0.0
+455.849465313536,0.0
+455.849465313536,3.0
+500.0,3.0
+					</series>
+					<comment/>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula>A[] (P_Sender.next_seq &gt;= P_Sender.base imply P_Sender.next_seq - P_Sender.base &lt;= N)</formula>
+			<comment>Buffer Safety (No Overflow) Ensure the Sender never sends more than N packets ahead of what has been acknowledged</comment>
+			<result outcome="success" type="quality" timestamp="2026-01-26 13:49:03 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>A[] (P_Receiver.r_base != (P_Sender.next_seq + 1) % MAX_SEQ)</formula>
+			<comment>Receiver Validity. Ensure the Receiver never advances its window (r_base) beyond the Sender's next_seq. This ensures the receiver isn't inventing data.</comment>
+			<result outcome="success" type="quality" timestamp="2026-01-25 20:59:07 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>A[] (P_Sender.base &gt; 0 imply P_Receiver.received[P_Sender.base - 1] == false)</formula>
+			<comment>Data Consistency If the Sender believes packet X is acknowledged (meaning Sender base has moved past X), the Receiver must have actually received X
+(This logic checks that if Sender has moved past a packet, the Receiver has already processed it and cleared the buffer)</comment>
+			<result outcome="success" type="quality" timestamp="2026-01-25 20:59:09 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>E&lt;&gt; P_Sender.base == MAX_SEQ - 1</formula>
+			<comment>Successful Termination (Reachability) Is it possible to transfer all packets and wrap around the sequence numbers?</comment>
+			<result outcome="success" type="quality" timestamp="2026-03-14 16:03:35 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>inf{ P_Receiver.r_base == 4 } : global_time</formula>
+			<comment>Best-Case Latency (Minimum Time) What is the fastest possible time to deliver the first 4 packets?</comment>
+		</query>
+		<query>
+			<formula>E[&lt;= 200; 1000] (min: global_time * (P_Receiver.r_base == 4))</formula>
+			<comment/>
+			<result outcome="success" type="quantity" value="≈ 0" timestamp="2026-03-14 16:15:38 +0100">
+				<details>≈ 0</details>
+				<plot title="Probability Density Distribution" xaxis="min: global_time * (P_Receiver.r_base == 4)" yaxis="probability density">
+					<series title="density" type="b(0.000000)" color="0x0000ff" encoding="csv">0.0,4.503599627370496E15
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">0.0,0.0
+0.0,4.503599627370496E15
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=2.2204e-16, bucket count=1
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 0]
+Mean estimate of displayed sample: ≈ 0</comment>
+				</plot>
+				<plot title="Probability Distribution" xaxis="min: global_time * (P_Receiver.r_base == 4)" yaxis="probability">
+					<series title="probability" type="b(0.000000)" color="0x0000ff" encoding="csv">0.0,1.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">0.0,0.0
+0.0,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=2.2204e-16, bucket count=1
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 0]
+Mean estimate of displayed sample: ≈ 0</comment>
+				</plot>
+				<plot title="Cumulative Probability Distribution" xaxis="min: global_time * (P_Receiver.r_base == 4)" yaxis="probability">
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">0.0,0.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">0.0,0.0
+0.0,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=2.2204e-16, bucket count=1
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 0]
+Mean estimate of displayed sample: ≈ 0</comment>
+				</plot>
+				<plot title="Cumulative Probability Confidence Intervals" xaxis="min: global_time * (P_Receiver.r_base == 4)" yaxis="probability">
+					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">0.0,0.003682083896865672
+					</series>
+					<series title="lower limit" type="k" color="0xdd0000" encoding="csv">0.0,0.0
+					</series>
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">0.0,0.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">0.0,0.0
+0.0,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=2.2204e-16, bucket count=1
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 0]
+Mean estimate of displayed sample: ≈ 0</comment>
+				</plot>
+				<plot title="Frequency Histogram" xaxis="min: global_time * (P_Receiver.r_base == 4)" yaxis="count">
+					<series title="count" type="b(0.000000)" color="0x0000ff" encoding="csv">0.0,1000.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">0.0,0.0
+0.0,1000.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=2.2204e-16, bucket count=1
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 0]
+Mean estimate of displayed sample: ≈ 0</comment>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula/>
+			<comment>Feasibility: Can we finish the full sequence within 100ms?</comment>
+		</query>
+		<query>
+			<formula>E[&lt;= 200; 1000] (max: global_time * (P_Receiver.r_base == 4))</formula>
+			<comment/>
+			<result outcome="success" type="quantity" value="75.4412 ± 5.76404 (95% CI)" timestamp="2026-03-14 16:16:04 +0100">
+				<details>75.4412 ± 5.76404 (95% CI)</details>
+				<plot title="Probability Density Distribution" xaxis="max: global_time * (P_Receiver.r_base == 4)" yaxis="probability density">
+					<series title="density" type="b(6.250000)" color="0x0000ff" encoding="csv">0.0,0.09551999904479998
+6.250000062500002,0.0
+12.500000125000003,0.0
+18.750000187500007,0.0
+25.000000250000006,0.0
+31.250000312500006,0.0
+37.50000037500001,0.0
+43.75000043750001,0.0
+50.00000050000001,0.0
+56.25000056250001,0.0
+62.50000062500001,0.0
+68.75000068750002,0.0
+75.00000075000003,0.0
+81.25000081250002,0.0
+87.50000087500003,0.0
+93.75000093750002,0.0
+100.00000100000003,3.199999967999999E-4
+106.25000106250003,4.799999951999999E-4
+112.50000112500003,1.5999999839999996E-4
+118.75000118750003,3.199999967999999E-4
+125.00000125000003,9.599999903999998E-4
+131.25000131250005,6.399999935999998E-4
+137.50000137500004,7.999999919999999E-4
+143.75000143750003,0.0027199999727999993
+150.00000150000005,0.0015999999839999997
+156.25000156250005,0.0015999999839999997
+162.50000162500004,0.0011199999887999998
+168.75000168750003,0.004319999956799999
+175.00000175000005,0.0014399999855999996
+181.25000181250005,0.0019199999807999995
+187.50000187500004,0.004319999956799999
+193.75000193750006,0.04175999958239999
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">75.44118324741056,0.0
+75.44118324741056,0.09551999904479998
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=6.25, bucket count=32
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 200]
+Mean estimate of displayed sample: 75.44 ± 5.764 (95% CI)</comment>
+				</plot>
+				<plot title="Probability Distribution" xaxis="max: global_time * (P_Receiver.r_base == 4)" yaxis="probability">
+					<series title="probability" type="b(6.250000)" color="0x0000ff" encoding="csv">0.0,0.597
+6.250000062500002,0.0
+12.500000125000003,0.0
+18.750000187500007,0.0
+25.000000250000006,0.0
+31.250000312500006,0.0
+37.50000037500001,0.0
+43.75000043750001,0.0
+50.00000050000001,0.0
+56.25000056250001,0.0
+62.50000062500001,0.0
+68.75000068750002,0.0
+75.00000075000003,0.0
+81.25000081250002,0.0
+87.50000087500003,0.0
+93.75000093750002,0.0
+100.00000100000003,0.002
+106.25000106250003,0.003
+112.50000112500003,0.001
+118.75000118750003,0.002
+125.00000125000003,0.006
+131.25000131250005,0.004
+137.50000137500004,0.005
+143.75000143750003,0.017
+150.00000150000005,0.01
+156.25000156250005,0.01
+162.50000162500004,0.007
+168.75000168750003,0.027
+175.00000175000005,0.009
+181.25000181250005,0.012
+187.50000187500004,0.027
+193.75000193750006,0.261
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">75.44118324741056,0.0
+75.44118324741056,0.597
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=6.25, bucket count=32
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 200]
+Mean estimate of displayed sample: 75.44 ± 5.764 (95% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Distribution" xaxis="max: global_time * (P_Receiver.r_base == 4)" yaxis="probability">
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">0.0,0.0
+6.250000062500002,0.597
+12.500000125000003,0.597
+18.750000187500007,0.597
+25.000000250000006,0.597
+31.250000312500006,0.597
+37.50000037500001,0.597
+43.75000043750001,0.597
+50.00000050000001,0.597
+56.25000056250001,0.597
+62.50000062500001,0.597
+68.75000068750002,0.597
+75.00000075000003,0.597
+81.25000081250002,0.597
+87.50000087500003,0.597
+93.75000093750002,0.597
+100.00000100000003,0.597
+106.25000106250003,0.599
+112.50000112500003,0.602
+118.75000118750003,0.603
+125.00000125000003,0.605
+131.25000131250005,0.611
+137.50000137500004,0.615
+143.75000143750003,0.62
+150.00000150000005,0.637
+156.25000156250005,0.647
+162.50000162500004,0.657
+168.75000168750003,0.664
+175.00000175000005,0.691
+181.25000181250005,0.7
+187.50000187500004,0.712
+193.75000193750006,0.739
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">75.44118324741056,0.0
+75.44118324741056,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=6.25, bucket count=32
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 200]
+Mean estimate of displayed sample: 75.44 ± 5.764 (95% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Confidence Intervals" xaxis="max: global_time * (P_Receiver.r_base == 4)" yaxis="probability">
+					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">0.0,0.003682083896865672
+6.250000062500002,0.6275771456439844
+12.500000125000003,0.6275771456439844
+18.750000187500007,0.6275771456439844
+25.000000250000006,0.6275771456439844
+31.250000312500006,0.6275771456439844
+37.50000037500001,0.6275771456439844
+43.75000043750001,0.6275771456439844
+50.00000050000001,0.6275771456439844
+56.25000056250001,0.6275771456439844
+62.50000062500001,0.6275771456439844
+68.75000068750002,0.6275771456439844
+75.00000075000003,0.6275771456439844
+81.25000081250002,0.6275771456439844
+87.50000087500003,0.6275771456439844
+93.75000093750002,0.6275771456439844
+100.00000100000003,0.6275771456439844
+106.25000106250003,0.6295465214905855
+112.50000112500003,0.63249959962615
+118.75000118750003,0.6334836955066023
+125.00000125000003,0.635451491003016
+131.25000131250005,0.6413516947282135
+137.50000137500004,0.645282496982268
+143.75000143750003,0.6501929780067928
+150.00000150000005,0.6668631600619819
+156.25000156250005,0.6766504424204184
+162.50000162500004,0.6864235511359629
+168.75000168750003,0.6932561405313709
+175.00000175000005,0.7195419682726643
+181.25000181250005,0.7282788878708556
+187.50000187500004,0.7399077928992207
+193.75000193750006,0.7659836031579349
+					</series>
+					<series title="lower limit" type="k" color="0xdd0000" encoding="csv">0.0,0.0
+6.250000062500002,0.565850043764274
+12.500000125000003,0.565850043764274
+18.750000187500007,0.565850043764274
+25.000000250000006,0.565850043764274
+31.250000312500006,0.565850043764274
+37.50000037500001,0.565850043764274
+43.75000043750001,0.565850043764274
+50.00000050000001,0.565850043764274
+56.25000056250001,0.565850043764274
+62.50000062500001,0.565850043764274
+68.75000068750002,0.565850043764274
+75.00000075000003,0.565850043764274
+81.25000081250002,0.565850043764274
+87.50000087500003,0.565850043764274
+93.75000093750002,0.565850043764274
+100.00000100000003,0.565850043764274
+106.25000106250003,0.5678688474086686
+112.50000112500003,0.5708980373110477
+118.75000118750003,0.5719080304491755
+125.00000125000003,0.5739284124870054
+131.25000131250005,0.5799927371969104
+137.50000137500004,0.5840382835964082
+143.75000143750003,0.5890982340617007
+150.00000150000005,0.6063274795249268
+156.25000156250005,0.6164810049425452
+162.50000162500004,0.6266486772044311
+168.75000168750003,0.6337746170627676
+175.00000175000005,0.6613286752837123
+181.25000181250005,0.670538321302634
+187.50000187500004,0.6828381132838073
+193.75000193750006,0.7106015911063485
+					</series>
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">0.0,0.0
+6.250000062500002,0.597
+12.500000125000003,0.597
+18.750000187500007,0.597
+25.000000250000006,0.597
+31.250000312500006,0.597
+37.50000037500001,0.597
+43.75000043750001,0.597
+50.00000050000001,0.597
+56.25000056250001,0.597
+62.50000062500001,0.597
+68.75000068750002,0.597
+75.00000075000003,0.597
+81.25000081250002,0.597
+87.50000087500003,0.597
+93.75000093750002,0.597
+100.00000100000003,0.597
+106.25000106250003,0.599
+112.50000112500003,0.602
+118.75000118750003,0.603
+125.00000125000003,0.605
+131.25000131250005,0.611
+137.50000137500004,0.615
+143.75000143750003,0.62
+150.00000150000005,0.637
+156.25000156250005,0.647
+162.50000162500004,0.657
+168.75000168750003,0.664
+175.00000175000005,0.691
+181.25000181250005,0.7
+187.50000187500004,0.712
+193.75000193750006,0.739
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">75.44118324741056,0.0
+75.44118324741056,1.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=6.25, bucket count=32
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 200]
+Mean estimate of displayed sample: 75.44 ± 5.764 (95% CI)</comment>
+				</plot>
+				<plot title="Frequency Histogram" xaxis="max: global_time * (P_Receiver.r_base == 4)" yaxis="count">
+					<series title="count" type="b(6.250000)" color="0x0000ff" encoding="csv">0.0,597.0
+6.250000062500002,0.0
+12.500000125000003,0.0
+18.750000187500007,0.0
+25.000000250000006,0.0
+31.250000312500006,0.0
+37.50000037500001,0.0
+43.75000043750001,0.0
+50.00000050000001,0.0
+56.25000056250001,0.0
+62.50000062500001,0.0
+68.75000068750002,0.0
+75.00000075000003,0.0
+81.25000081250002,0.0
+87.50000087500003,0.0
+93.75000093750002,0.0
+100.00000100000003,2.0
+106.25000106250003,3.0
+112.50000112500003,1.0
+118.75000118750003,2.0
+125.00000125000003,6.0
+131.25000131250005,4.0
+137.50000137500004,5.0
+143.75000143750003,17.0
+150.00000150000005,10.0
+156.25000156250005,10.0
+162.50000162500004,7.0
+168.75000168750003,27.0
+175.00000175000005,9.0
+181.25000181250005,12.0
+187.50000187500004,27.0
+193.75000193750006,261.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">75.44118324741056,0.0
+75.44118324741056,597.0
+					</series>
+					<comment>Parameters: α=0.05, ε=0.05, bucket width=6.25, bucket count=32
+Runs: 1000 in total, 1000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [0, 200]
+Mean estimate of displayed sample: 75.44 ± 5.764 (95% CI)</comment>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula>A[] forall (i : id_t) (P_Receiver.received[i] imply inside_window(P_Receiver.r_base, i))</formula>
+			<comment>Buffer Integrity.Strictly proves the receiver never buffers data outside its valid window.</comment>
+		</query>
+		<query>
+			<formula>A[] (P_Sender.next_seq == P_Sender.base + N imply global_time &lt;= 500)</formula>
+			<comment>Wait Time bound. Ensures that if the window is full, the sender isn't blocked for more than 500ms.</comment>
+			<result outcome="success" type="quality" timestamp="2026-01-25 21:38:08 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>sup: P_Sender.count()</formula>
+			<comment>Maximum Queue/Buffer Usage What is the maximum number of unacknowledged packets ever in flight? (Useful for sizing hardware buffers)</comment>
+		</query>
+		<query>
+			<formula>A[] (P_Sender.count() &lt;= N)</formula>
+			<comment>Property: Window never exceeds size N</comment>
+			<result outcome="success" type="quality" timestamp="2026-01-25 21:05:15 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>A[] (P_Medium.TransP imply P_Medium.y &lt;= 10)</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2026-01-25 21:50:34 +0100">
+			</result>
+		</query>
+		<query>
+			<formula>A[] (P_Sender.base == P_Receiver.r_base)</formula>
+			<comment>Reliability</comment>
+			<result outcome="success" type="quality" timestamp="2026-01-25 21:39:22 +0100">
+			</result>
+		</query>
+	</queries>
+</nta>
